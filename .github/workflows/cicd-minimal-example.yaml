@@ -1,0 +1,42 @@
+# =========================
+# WORKFLOW : définition du pipeline CI/CD (nom + déclencheurs + jobs)
+# Fichier à placer dans : .github/workflows/ci.yml
+# =========================
+name: ci-test-only
+
+# -------------------------
+# TRIGGERS : événements qui lancent le workflow
+# - push : sur la branche main
+# - pull_request : PR vers main
+# - workflow_dispatch : exécution manuelle depuis l'UI
+# -------------------------
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# -------------------------
+# JOBS : blocs d'exécution indépendants
+# Chaque job tourne sur un RUNNER (VM) et contient des STEPS (actions/commandes)
+# -------------------------
+jobs:
+  test:                           # Nom du job
+    name: Tests (job unique)
+    runs-on: ubuntu-latest        # Runner hébergé par GitHub
+    steps: # STEPS : séquence d'actions et de commandes
+      - name: Checkout
+        uses: actions/checkout@v4 # Récupère le code du dépôt (révision de l'événement)
+
+      # Exemple générique : préparer un fichier à tester (remplace selon ton stack)
+      - name: Prepare test input
+        run: |
+          echo "Hello CI" > app.txt
+
+      # Test simple (shell) : vérifier que le fichier existe et contient la chaîne attendue
+      - name: Run tests (shell)
+        run: |
+          test -f app.txt
+          grep -q "Hello CI" app.txt
+          echo "Tests OK : app.txt contient 'Hello CI'"
