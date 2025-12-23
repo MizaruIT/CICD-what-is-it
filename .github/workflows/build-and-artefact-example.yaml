@@ -1,0 +1,58 @@
+
+name: ci-cd-minimal            # Nom du workflow (apparaît dans l'onglet Actions)
+
+on:                            # --- TRIGGERS : quand lancer le workflow ?
+  push:                        # Au push…
+    branches: [ "main" ]       # …sur la branche main
+  pull_request:                # Et sur les Pull Requests visant main
+    branches: [ "main" ]
+  workflow_dispatch:           # Lancement manuel depuis l’UI GitHub
+
+jobs:                          # --- JOBS : blocs d’exécution indépendants
+  build:                       # Job 1 : Build (exécute des étapes/steps)
+    runs-on: ubuntu-latest     # RUNNER : VM hébergée par GitHub qui exécute le job
+    steps:                     # STEPS : liste d’actions/commandes séquentielles
+      - name: Checkout code
+        uses: actions/checkout@v4    # Récupère le dépôt (HEAD de l’événement)
+      - name: Build (exemple générique)
+        run: |                       # Commandes de build à mettre 
+          echo "Compiling..."
+          mkdir -p out && echo "Hello CI" > out/app.txt
+      - name: Upload artifact        # ARTEFACT : fichier(s) produit(s) par le job
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-out              # Nom logique de l’artefact
+          path: out/                 # Dossier/fichiers à conserver pour d’autres jobs
+
+  test:                        # Job 2 : Tests (dépend du build)
+    runs-on: ubuntu-latest
+    needs: build               # Dépendance : n’exécuter qu’après le job "build"
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-out              # Récupère l’artefact produit par "build"
+      - name: Run tests (exemple)
+        run: |                      # Remplace par tes tests réels
+          test -f app.txt
+          grep -q "Hello CI" app.txt
+
+  deploy:                      # Job 3 : Déploiement (staging ici, simulé)
+    runs-on: ubuntu-latest
+    needs: test                # Ne lancer qu’après succès des tests
+    if: github.ref == 'refs/heads/main'   # Garde-fou : seulement depuis main
+    environment:               # ENVIRONNEMENT : contexte protégé + secrets dédiés
+      name: staging            # Nom d’environnement (configurable dans Settings > Environments)
+      url: https://example.com/staging   # (Optionnel) URL d’accès publiée dans l’UI
+    steps:
+      - name: Deploy (simulation)
+        run: echo "Deploying to staging..."  # Remplace par ton script/commande de déploiement
+
+# Notes :
+# - WORKFLOW = ce fichier YAML dans .github/workflows/ (décrit triggers + jobs).
+# - TRIGGERS (bloc `on:`) = événements qui déclenchent l’exécution (push, PR, manuel).
+# - JOB = unité d’exécution isolée, avec ses steps, qui tourne sur un RUNNER.
+# - RUNNER = machine qui exécute le job (ici `ubuntu-latest`, runner GitHub hébergé).
+# - STEP = action (uses:) ou commande (run:) exécutée dans l’ordre.
+# - ARTEFACT = fichier(s) partagé(s) entre jobs (upload/download-artifact).
+# - ENVIRONNEMENT = scope logique pour déploiements (secrets, approbations, URL).
