@@ -2,21 +2,18 @@
 name: Test CI (VULNERABLE)
 
 on:
-  workflow_run:
-    workflows: ['Build CI']
-    types: [completed]
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   demo:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       # ⚠️ VULNÉRABLE : interpolation directe d'entrées non fiables
-      - name: Read PR metadata (VULNERABLE)
-        shell: bash
+      - name: Echo PR metadata (VULNERABLE)
         run: |
-          echo "Checking conditions to merge PR with id ${{ github.event.number }}"
-          echo "Checking PR title: ${{ github.event.pull_request.title }}"
+          echo "PR ID: ${{ github.event.number }}"
+          echo "PR Title: ${{ github.event.pull_request.title }}"
